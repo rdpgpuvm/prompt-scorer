@@ -1,11 +1,9 @@
 """
 FastAPI app for the Prompt Quality Scoring Agent.
-Deploys to Vercel as a serverless function.
 """
 import os
 import sys
 
-# Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from fastapi import FastAPI, Form, Request
@@ -15,7 +13,9 @@ from scorer_agent import score_prompt_raw
 
 app = FastAPI(title="Prompt Quality Scorer")
 
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "templates"))
+templates = Jinja2Templates(
+    directory=os.path.join(os.path.dirname(__file__), "..", "templates")
+)
 
 
 @app.get("/", response_class=HTMLResponse)
