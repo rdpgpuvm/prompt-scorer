@@ -54,7 +54,7 @@
             outline: none;
             border-color: #00d4ff;
         }
-        button {
+        button[type="submit"] {
             width: 100%;
             padding: 1rem;
             margin-top: 1rem;
@@ -67,7 +67,7 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        button:hover {
+        button[type="submit"]:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,212,255,0.3);
         }
@@ -98,7 +98,7 @@
         }
         .criteria-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 1rem;
             margin-bottom: 1.5rem;
         }
@@ -109,13 +109,13 @@
             border-left: 4px solid #00d4ff;
         }
         .criterion-name {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #888;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .criterion-score {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: #00d4ff;
             margin-top: 0.25rem;
@@ -137,34 +137,100 @@
             border-radius: 8px;
             border-left: 3px solid #7b2cbf;
         }
-        .suggestions-list li::before {
-            content: '💡 ';
-        }
         .section-title {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 0.75rem;
             color: #fff;
         }
-        .examples {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
+        .test-prompts {
+            margin-top: 1rem;
         }
-        .example-chip {
-            background: rgba(255,255,255,0.1);
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
+        .test-prompts-title {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .prompt-item {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .prompt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.875rem 1rem;
             cursor: pointer;
             transition: background 0.2s;
-            border: none;
-            color: #ccc;
         }
-        .example-chip:hover {
-            background: rgba(0,212,255,0.2);
-            color: #fff;
+        .prompt-header:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .prompt-text {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 1rem;
+        }
+        .prompt-score-badge {
+            background: rgba(0,212,255,0.15);
+            color: #00d4ff;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        .prompt-arrow {
+            color: #888;
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+        .prompt-item.expanded .prompt-arrow {
+            transform: rotate(90deg);
+        }
+        .prompt-body {
+            display: none;
+            padding: 0 1rem 1rem;
+        }
+        .prompt-item.expanded .prompt-body {
+            display: block;
+        }
+        .prompt-body .criteria-grid {
+            margin: 0.75rem 0;
+        }
+        .prompt-body .criterion {
+            padding: 0.6rem;
+        }
+        .prompt-body .criterion-score {
+            font-size: 1.1rem;
+        }
+        .run-btn {
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.75rem;
+        }
+        .run-btn:hover {
+            opacity: 0.9;
+        }
+        .loading {
+            color: #00d4ff;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
@@ -174,23 +240,22 @@
         <p class="subtitle">AI-powered prompt evaluation across 5 dimensions</p>
         
         <div class="card">
-            <form method="POST" action="/">
+            <form method="POST" action="/" id="scoreForm">
                 <textarea name="prompt" id="prompt" placeholder="Paste your prompt here to score it...">{{ result.prompt if result else '' }}</textarea>
-                <div class="examples">
-                    <button type="button" class="example-chip" onclick="setPrompt('What is AI?')">Weak: "What is AI?"</button>
-                    <button type="button" class="example-chip" onclick="setPrompt('Write a summary of the French Revolution.')">Basic: French Revolution</button>
-                    <button type="button" class="example-chip" onclick="setPrompt('Act as a senior marketing consultant. Draft 5 catchy taglines for sustainable coffee beans targeting millennials who value ethical sourcing.')">Strong: Marketing taglines</button>
-                </div>
                 <button type="submit">Score My Prompt</button>
             </form>
         </div>
 
-        {% if result %}
         <div class="card">
+            <div class="test-prompts-title">📋 Test Prompts (click to expand & run)</div>
+            <div class="test-prompts" id="testPrompts"></div>
+        </div>
+
+        {% if result %}
+        <div class="card" id="resultCard">
             <div class="score-circle" style="--score: {{ result.final_score }}">
                 <span class="score-value">{{ "%.1f"|format(result.final_score) }}</span>
             </div>
-            
             <div class="criteria-grid">
                 {% for criterion, score in result.criteria_scores.items() %}
                 <div class="criterion">
@@ -199,10 +264,8 @@
                 </div>
                 {% endfor %}
             </div>
-            
             <div class="section-title">📝 Feedback</div>
             <div class="feedback-box">{{ result.feedback }}</div>
-            
             <div class="section-title">🚀 Suggestions</div>
             <ul class="suggestions-list">
                 {% for suggestion in result.suggestions %}
@@ -214,8 +277,77 @@
     </div>
     
     <script>
-        function setPrompt(text) {
-            document.getElementById('prompt').value = text;
+        const testPrompts = [
+            { text: "What is AI?", expected: "~2/10" },
+            { text: "Explain quantum computing.", expected: "~3/10" },
+            { text: "Write a summary of the French Revolution.", expected: "~5/10" },
+            { text: "Draft an email to my team about the project delay.", expected: "~6/10" },
+            { text: "As a fitness coach, create a 4-week workout plan for a beginner who wants to lose weight and has no gym access.", expected: "~8/10" },
+            { text: "Act as a senior marketing consultant. Draft 5 catchy taglines for sustainable coffee beans targeting millennials who value ethical sourcing.", expected: "~9/10" },
+            { text: "You are a cybersecurity expert. Write a 500-word blog post explaining zero-trust architecture to C-level executives, including 3 real-world implementation examples and a cost-benefit summary.", expected: "~9.5/10" }
+        ];
+
+        const container = document.getElementById('testPrompts');
+
+        testPrompts.forEach((tp, i) => {
+            const item = document.createElement('div');
+            item.className = 'prompt-item';
+            item.innerHTML = `
+                <div class="prompt-header" onclick="togglePrompt(${i})">
+                    <span class="prompt-text">${tp.text}</span>
+                    <span class="prompt-score-badge">Expected: ${tp.expected}</span>
+                    <span class="prompt-arrow">▶</span>
+                </div>
+                <div class="prompt-body" id="body-${i}">
+                    <button class="run-btn" onclick="runPrompt(${i}, event)">Run Scorer</button>
+                    <div class="loading" id="loading-${i}" style="display:none">Scoring...</div>
+                    <div id="result-${i}"></div>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+
+        function togglePrompt(i) {
+            const item = document.querySelectorAll('.prompt-item')[i];
+            item.classList.toggle('expanded');
+        }
+
+        async function runPrompt(i, event) {
+            event.stopPropagation();
+            const prompt = testPrompts[i].text;
+            const loading = document.getElementById(`loading-${i}`);
+            const resultDiv = document.getElementById(`result-${i}`);
+            loading.style.display = 'block';
+            resultDiv.innerHTML = '';
+
+            try {
+                const formData = new FormData();
+                formData.append('prompt', prompt);
+                const res = await fetch('/api/score', { method: 'POST', body: formData });
+                const data = await res.json();
+                loading.style.display = 'none';
+
+                let criteriaHtml = '';
+                for (const [k, v] of Object.entries(data.criteria_scores)) {
+                    criteriaHtml += `<div class="criterion"><div class="criterion-name">${k}</div><div class="criterion-score">${v.toFixed(1)}/10</div></div>`;
+                }
+
+                resultDiv.innerHTML = `
+                    <div style="margin-top:1rem">
+                        <div class="score-circle" style="--score:${data.final_score};width:100px;height:100px;margin:0.5rem auto">
+                            <span class="score-value" style="font-size:1.8rem">${data.final_score.toFixed(1)}</span>
+                        </div>
+                        <div class="criteria-grid">${criteriaHtml}</div>
+                        <div class="section-title" style="font-size:0.95rem">Feedback</div>
+                        <div class="feedback-box" style="font-size:0.9rem">${data.feedback}</div>
+                        <div class="section-title" style="font-size:0.95rem">Suggestions</div>
+                        <ul class="suggestions-list">${data.suggestions.map(s => `<li style="font-size:0.85rem;padding:0.5rem 0.75rem">${s}</li>`).join('')}</ul>
+                    </div>
+                `;
+            } catch (e) {
+                loading.style.display = 'none';
+                resultDiv.innerHTML = `<div style="color:#ff6b6b;margin-top:0.5rem">Error: ${e.message}</div>`;
+            }
         }
     </script>
 </body>
