@@ -1,15 +1,19 @@
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 import os
+from jinja2 import Environment, FileSystemLoader
 
 app = FastAPI(title="Prompt Quality Scorer")
 
-templates = Jinja2Templates(directory="templates")
+# Use raw jinja2 to avoid starlette templating issues
+jinja_env = Environment(loader=FileSystemLoader("templates"))
 
-# Simple in-memory scorer for demo (replace with real LLM call)
+def render_template(name, **context):
+    template = jinja_env.get_template(name)
+    return template.render(**context)
+
+# Simple scorer
 def score_prompt_raw(prompt: str):
-    # Mock scoring logic - in production this calls the LLM
     words = len(prompt.split())
     clarity = min(10, max(2, words * 0.5 + 3))
     specificity = min(10, max(2, words * 0.3 + 2))
@@ -38,12 +42,14 @@ def score_prompt_raw(prompt: str):
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "result": None})
+    html = render_template("index.html", request=request, result=None)
+    return HTMLResponse(content=html)
 
 @app.post("/", response_class=HTMLResponse)
 async def score(request: Request, prompt: str = Form(...)):
     result = score_prompt_raw(prompt)
-    return templates.TemplateResponse("index.html", {"request": request, "result": result})
+    html = render_template("index.html", request=request, result=result)
+    return HTMLResponse(content=html)
 
 @app.post("/api/score")
 async def api_score(prompt: str = Form(...)):
